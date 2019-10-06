@@ -4,19 +4,12 @@ from enum import Enum
 
 class Dataset(Enum):
     CIRCLE = "circle",
-    SPIRAL = "spiral"
+    SPIRAL = "spiral",
+    NESTED = "nested_circle",
+    COMPLEX = "complex_circle"
 
 
-def get_circle_dataset(points: int, min_range: float, max_range: float, radius: float):
-    # generating labelled training data
-    range_ = max_range-min_range
-    N = points
-    X = (np.random.rand(N, 2) * range_) + min_range
-    y = np.sqrt(np.sum(np.multiply(X, X), axis=1)) > radius
-    return np.stack((X[:, 0], X[:, 1], y), axis=1)
-
-
-def get_spiral_dataset(points: int, classes: int):
+def spiral_dataset(points, classes):
     N = points  # number of points per class
     D = 2  # dimensionality
     K = classes  # number of classes
@@ -28,4 +21,35 @@ def get_spiral_dataset(points: int, classes: int):
         t = np.linspace(j * 4, (j + 1) * 4, N) + np.random.randn(N) * 0.2  # theta
         X[ix] = np.c_[r * np.sin(t), r * np.cos(t)]
         y[ix] = j
-    return np.stack((X[:, 0], X[:, 1], y), axis=1)
+    return X, y
+
+
+def circle_dataset(samples: int, min_range: float, max_range: float, radius: float):
+    range_ = max_range - min_range
+    X = (np.random.rand(samples, 2) * range_) + min_range
+    y = np.array(np.sqrt(np.sum(np.multiply(X, X), axis=1)) > radius, dtype="uint8")
+    return X, y
+
+
+def nested_circle_dataset(samples: int, min_range: float, max_range: float, radius1: float, radius2: float, order=(1, 2)):
+    range_ = max_range - min_range
+    X = (np.random.rand(samples, 2) * range_) + min_range
+    y = np.zeros(samples, dtype="uint8")
+    y[np.sqrt(np.sum(np.multiply(X, X), axis=1)) < radius1] = order[0]
+    y[np.sqrt(np.sum(np.multiply(X, X), axis=1)) < radius2] = order[1]
+    return X, y
+
+
+def complex_circles_dataset(samples: int, min_range: float, max_range: float, radius1: float, radius2: float):
+    offset = (max_range - min_range) / 4
+    c1_X, c1_y = nested_circle_dataset(int(samples / 4), min_range / 2, max_range / 2, radius1, radius2, order=(2, 1))
+    c2_X, c2_y = nested_circle_dataset(int(samples / 4), min_range / 2, max_range / 2, radius1, radius2)
+    c3_X, c3_y = nested_circle_dataset(int(samples / 4), min_range / 2, max_range / 2, radius1, radius2)
+    c4_X, c4_y = nested_circle_dataset(int(samples / 4), min_range / 2, max_range / 2, radius1, radius2, order=(2, 1))
+
+    c1_X += np.array((-offset, offset))
+    c2_X += np.array((offset, offset))
+    c3_X += np.array((-offset, -offset))
+    c4_X += np.array((offset, -offset))
+
+    return np.concatenate((c1_X, c2_X, c3_X, c4_X), axis=0), np.concatenate((c1_y, c2_y, c3_y, c4_y), axis=0)
