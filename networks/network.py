@@ -22,21 +22,37 @@ def shuffle_dataset(X: np.ndarray, y: np.ndarray) -> (np.ndarray, np.ndarray, np
 
 class Network(Generic[T]):
 
-    def __init__(self, architecture, lr, reg):
+    def __init__(self, architecture=None, lr=None, reg=None, layers=None, biases=None):
         super().__init__()
-        self.architecture = architecture
-        self.n_inputs = architecture[0]
-        self.n_classes = architecture[-1]
-        self.n_layers = len(architecture) - 1
+        assert (architecture and lr and reg) or (layers and biases)
 
-        self.lr = lr
-        self.reg = reg
+        if architecture:
+            self.architecture = architecture
+            self.n_inputs = architecture[0]
+            self.n_classes = architecture[-1]
+            self.n_layers = len(architecture) - 1
 
-        self.layers: List[T] = []
-        self.biases: List[T] = []
-        for i in range(1, len(architecture)):
-            self.layers.append(self.init_layer(architecture[i - 1], architecture[i]))
-            self.biases.append(self.init_bias(architecture[i]))
+            self.lr = lr
+            self.reg = reg
+
+            self.is_trained = False
+
+            self.layers: List[T] = []
+            self.biases: List[T] = []
+            for i in range(1, len(architecture)):
+                self.layers.append(self.init_layer(architecture[i - 1], architecture[i]))
+                self.biases.append(self.init_bias(architecture[i]))
+        else:
+            self.layers = layers
+            self.biases = biases
+
+            self.architecture = [layers[0].shape[0]]
+            self.architecture += [layer.shape[1] for layer in layers]
+            self.n_inputs = self.architecture[0]
+            self.n_classes = self.architecture[-1]
+            self.n_layers = len(self.architecture) - 1
+
+            self.is_trained = True
 
     @abstractmethod
     def init_layer(self, prev_width, width) -> T:
@@ -50,14 +66,14 @@ class Network(Generic[T]):
         selected_layers = []
         selected_biases = []
         if arch_selection:
-            assert len(arch_selection) == self.n_layers+1
+            assert len(arch_selection) == self.n_layers + 1
             assert len(arch_selection[0]) == self.n_inputs
             assert len(arch_selection[-1]) == self.n_classes
-            for i in range(1, self.n_layers+1):
+            for i in range(1, self.n_layers + 1):
                 neurons = list(arch_selection[i])
                 prev_neurons = list(arch_selection[i - 1])
-                selected_layers.append(self.layers[i-1][prev_neurons, :][:, neurons])
-                selected_biases.append(self.biases[i-1][:, neurons])
+                selected_layers.append(self.layers[i - 1][prev_neurons, :][:, neurons])
+                selected_biases.append(self.biases[i - 1][:, neurons])
         else:
             selected_layers = self.layers
             selected_biases = self.biases
@@ -90,7 +106,7 @@ class Network(Generic[T]):
         outputs = [inputs]
         for i in range(self.n_layers):
             outputs.append(self.xw_plus_b(outputs[-1], sel_layers[i], sel_biases[i]))
-            if i != self.n_layers-1:
+            if i != self.n_layers - 1:
                 if is_mlp:
                     outputs.append(self.perceptronise(outputs[-1], -sel_biases[i]))
                 else:
@@ -128,7 +144,19 @@ class Network(Generic[T]):
     def load(path: str) -> Generic[T]:
         pass
 
+    @staticmethod
+    @abstractmethod
+    def load(path: str) -> Generic[T]:
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def save_exists(path: str) -> bool:
+        pass
+
     def train(self, X: np.array, y: np.array, window_size: int, log: bool = True):
+        assert not self.is_trained
+
         stats = RunningStats(window_size)
 
         n_test_samples = int(X.shape[0] * 0.1)

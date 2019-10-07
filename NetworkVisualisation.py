@@ -9,7 +9,6 @@ from networks.network import Network
 from networks.torch_network import TorchNetwork
 from networks.numpy_network import NumpyNetwork
 
-
 def scale(vector, axis=0, scale=1):
     result = vector - np.min(vector, axis=axis)
     result /= np.max(result, axis=0)
@@ -185,12 +184,12 @@ class NetworkVisualisation(object):
             self.update_just_plot1()
         elif label == "Enabled?":
             is_enabled = self.p1_opt_buttons.get_status()[1]
-            if is_enabled and self.perceptron1 not in self.selected_architecture[0]:
-                self.selected_architecture[0].add(self.perceptron1)
-            elif not is_enabled and self.perceptron1 in self.selected_architecture[0]:
-                layer1_out = sorted(list(self.selected_architecture[0])).index(self.perceptron1)
+            if is_enabled and self.perceptron1 not in self.selected_architecture[1]:
+                self.selected_architecture[1].add(self.perceptron1)
+            elif not is_enabled and self.perceptron1 in self.selected_architecture[1]:
+                layer1_out = sorted(list(self.selected_architecture[1])).index(self.perceptron1)
                 self.layer1_3d_plot.remove_plot(layer1_out)
-                self.selected_architecture[0].remove(self.perceptron1)
+                self.selected_architecture[1].remove(self.perceptron1)
         elif label == "Cut?":
             self.cut = not self.cut
 
@@ -223,9 +222,9 @@ class NetworkVisualisation(object):
         plt.show()
 
     def update_plot1(self, out1, out2):
-        if self.perceptron1 in self.selected_architecture[0]:
+        if self.perceptron1 in self.selected_architecture[1]:
             self.layer1_plot.set_visible(True)
-            layer1_out = sorted(list(self.selected_architecture[0])).index(self.perceptron1)
+            layer1_out = sorted(list(self.selected_architecture[1])).index(self.perceptron1)
             if not self.is_relu:
                 layer1_data = out1[:, :, layer1_out]
             else:
@@ -235,7 +234,7 @@ class NetworkVisualisation(object):
             self.layer1_plot.set_visible(False)
 
     def update_3d_plot1(self, out1, out2):
-        if self.perceptron1 in self.selected_architecture[0]:
+        if self.perceptron1 in self.selected_architecture[1]:
             if not self.is_relu:
                 self.layer1_3d_plot.update_all(out1)
             else:
@@ -243,7 +242,7 @@ class NetworkVisualisation(object):
 
     def update_plot2(self, out2, out3, out4):
         if self.is_pre_add:
-            layer2_data = scale_out2(out2, self.network.layers[-1], self.selected_architecture[0], self.perceptron2, self.precision)
+            layer2_data = scale_out2(out2, self.network.to_np(self.network.layers[-1]), self.selected_architecture[1], self.perceptron2, self.precision)
             layer2_data = np.sum(layer2_data, axis=2)
         elif not self.is_sig:
             layer2_data = out3[:, :, 0]
@@ -253,7 +252,7 @@ class NetworkVisualisation(object):
 
     def update_3d_plot2(self, out2, out3, out4):
         if self.is_pre_add:
-            layer2_data = scale_out2(out2, self.network.layers[-1], self.selected_architecture[0], self.perceptron2, self.precision)
+            layer2_data = scale_out2(out2, self.network.to_np(self.network.layers[-1]), self.selected_architecture[1], self.perceptron2, self.precision)
         elif not self.is_sig:
             layer2_data = out3
         else:
@@ -296,8 +295,8 @@ class NetworkVisualisation(object):
         self.p1x_slid.vline.set_xdata(self.original_layers[0][0, self.perceptron1])
         self.p1y_slid.vline.set_xdata(self.original_layers[0][1, self.perceptron1])
 
-        if (self.perceptron1 in self.selected_architecture[0] and not self.p1_opt_buttons.get_status()[1]) or \
-                (self.perceptron1 not in self.selected_architecture[0] and self.p1_opt_buttons.get_status()[1]):
+        if (self.perceptron1 in self.selected_architecture[1] and not self.p1_opt_buttons.get_status()[1]) or \
+                (self.perceptron1 not in self.selected_architecture[1] and self.p1_opt_buttons.get_status()[1]):
             self.p1_opt_buttons.set_active(1)
 
 
@@ -305,9 +304,19 @@ if __name__ == '__main__':
     # NetworkVisualisation(units=1, data_points=6, min_range=-1, max_range=1, quality=100, saves_path="resources/Saves", dataset=Dataset.CIRCLE).show()
     # NetworkVisualisation(units=4, data_points=1000, min_range=-1, max_range=1, quality=100, dataset=Dataset.CIRCLE).show()
     # NetworkVisualisation(units=24, data_points=1000, min_range=-1, max_range=1, quality=100, saves_path="resources/Saves", dataset=Dataset.SPIRAL).show()
-    # X, y = spiral_dataset(1000, 3)
-    X, y = circle_dataset(1000, -1, 1, 0.8)
-    # network = NumpyNetwork([2, 24, 3], 1e1, 1e5)
-    network = TorchNetwork([2, 12, 2], 3e-3, 1e-5)
-    network.train(X, y, 100)
+    save_path = "/home/michael/dev/network-visualisation/resources/Saves/test"
+    X, y = spiral_dataset(1000, 3)
+    network_class = TorchNetwork
+    # X, y = circle_dataset(1000, -1, 1, 0.8)
+
+    if not network_class.save_exists(save_path):
+        architecture = [2, 32, 3]
+        lr = 5e-1
+        reg = 1e-4
+        network = network_class(architecture, lr, reg)
+        # network = TorchNetwork(architecture, lr, reg)
+        network.train(X, y, 200)
+        network.save(save_path)
+    else:
+        network = network_class.load(save_path)
     NetworkVisualisation(X, y, network, -1, 1, 50).show()

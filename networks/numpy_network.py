@@ -2,12 +2,13 @@ from typing import Generic
 
 from networks.network import Network, List, T
 import numpy as np
+import os
 
 
 class NumpyNetwork(Network[np.ndarray]):
 
-    def __init__(self, architecture, lr, reg):
-        super().__init__(architecture, lr, reg)
+    def __init__(self, architecture=None, lr=None, reg=None, layers=None, biases=None):
+        super().__init__(architecture, lr, reg, layers, biases)
 
     def init_layer(self, prev_width, width):
         return np.random.randn(prev_width, width).astype("float32")
@@ -42,11 +43,12 @@ class NumpyNetwork(Network[np.ndarray]):
         error /= error.shape[0]
 
         for i in reversed(range(self.n_layers)):
-            self.layers[i] -= self.lr * self.reg * np.dot(forward_results[i*2].T, error)
+            layer_index = i * 2
+            self.layers[i] -= self.lr * self.reg * np.dot(forward_results[layer_index].T, error)
             self.biases[i] -= self.lr * np.sum(error, axis=0, keepdims=True)
 
             error = np.dot(error, self.layers[i].T)
-            error[forward_results[i*2] <= 0] = 0
+            error[forward_results[layer_index] <= 0] = 0
 
         # dscores = forward_results[-1]
         # dscores[range(error.shape[0]), y_pred] -= 1
@@ -69,10 +71,21 @@ class NumpyNetwork(Network[np.ndarray]):
         return inputs
 
     def save(self, path: str) -> None:
-        pass
+        if path[-5:-1] != ".npy":
+            path += ".npy"
+        np.save(path, [self.layers, self.biases])
+
+    @staticmethod
+    def save_exists(path: str) -> bool:
+        if path[-5:-1] != ".npy":
+            path += ".npy"
+        return os.path.exists(path)
 
     @staticmethod
     def load(path: str) -> Generic[T]:
-        pass
-
-
+        if path[-5:-1] != ".npy":
+            path += ".npy"
+        layers, biases = np.load(path, allow_pickle=True)
+        layers = [layers[i] for i in range(len(layers))]
+        biases = [biases[i] for i in range(len(biases))]
+        return NumpyNetwork(layers=layers, biases=biases)

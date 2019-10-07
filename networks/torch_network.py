@@ -5,16 +5,18 @@ import numpy as np
 
 from networks.network import Network, T
 
+import os
 import torch
 from torch import Tensor
 
 
 class TorchNetwork(Network[Tensor], ABC):
 
-    def __init__(self, architecture, lr, reg):
-        super().__init__(architecture, lr, reg)
-        self.optim = torch.optim.Adam(self.layers + self.biases, lr=lr)
-        self.criterion = torch.nn.CrossEntropyLoss()
+    def __init__(self, architecture=None, lr=None, reg=None, layers=None, biases=None):
+        super().__init__(architecture, lr, reg, layers, biases)
+        if not self.is_trained:
+            self.optim = torch.optim.Adam(self.layers + self.biases, lr=lr)
+            self.criterion = torch.nn.CrossEntropyLoss()
 
     def init_layer(self, prev_width, width) -> T:
         return torch.randn(prev_width, width, dtype=torch.float64, requires_grad=True)
@@ -59,10 +61,21 @@ class TorchNetwork(Network[Tensor], ABC):
         return torch.from_numpy(inputs)
 
     def save(self, path: str) -> None:
-        pass
+        if path[-4:-1] != ".pt":
+            path += ".pt"
+        torch.save([self.layers, self.biases], path)
+
+    @staticmethod
+    def save_exists(path: str) -> bool:
+        if path[-4:-1] != ".pt":
+            path += ".pt"
+        return os.path.exists(path)
 
     @staticmethod
     def load(path: str) -> Generic[T]:
-        pass
+        if path[-4:-1] != ".pt":
+            path += ".pt"
+        layers, biases = torch.load(path)
+        return TorchNetwork(layers=layers, biases=biases)
 
 
