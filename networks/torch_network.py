@@ -27,6 +27,10 @@ class TorchNetwork(Network[Tensor], ABC):
     def softmax(self, inputs):
         return inputs.softmax(dim=1)
 
+    def normalise(self, inputs: Tensor) -> Tensor:
+        result = inputs-inputs.min()
+        return result / result.max()
+
     def clamp(self, inputs, minimum=None, maximum=None):
         return inputs.clamp(min=minimum)
 
@@ -34,7 +38,7 @@ class TorchNetwork(Network[Tensor], ABC):
         return X.mm(W) + b
 
     def perceptronise(self, inputs: Tensor, thresholds: Tensor) -> Tensor:
-        return (inputs > thresholds).type(torch.float32)
+        return (inputs > thresholds).type(torch.float64)
 
     def reshape(self, inputs: T, new_shape: List[int]) -> T:
         return inputs.view(*new_shape)

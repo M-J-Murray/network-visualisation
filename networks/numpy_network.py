@@ -20,6 +20,10 @@ class NumpyNetwork(Network[np.ndarray]):
         exp_f = np.exp(inputs)
         return exp_f / np.sum(exp_f, axis=1, keepdims=True)
 
+    def normalise(self, inputs: np.ndarray) -> np.ndarray:
+        result = inputs - inputs.min()
+        return result / result.max()
+
     def clamp(self, inputs, minimum=None, maximum=None):
         result = inputs
         if minimum is not None:

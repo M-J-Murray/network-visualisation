@@ -68,7 +68,6 @@ class Network(Generic[T]):
         if arch_selection:
             assert len(arch_selection) == self.n_layers + 1
             assert len(arch_selection[0]) == self.n_inputs
-            assert len(arch_selection[-1]) == self.n_classes
             for i in range(1, self.n_layers + 1):
                 neurons = list(arch_selection[i])
                 prev_neurons = list(arch_selection[i - 1])
@@ -82,6 +81,10 @@ class Network(Generic[T]):
 
     @abstractmethod
     def softmax(self, inputs: T) -> T:
+        pass
+
+    @abstractmethod
+    def normalise(self, inputs: T) -> T:
         pass
 
     @abstractmethod
@@ -111,7 +114,11 @@ class Network(Generic[T]):
                     outputs.append(self.perceptronise(outputs[-1], -sel_biases[i]))
                 else:
                     outputs.append(self.clamp(outputs[-1], minimum=0))
-        outputs.append(self.softmax(outputs[-1]))
+
+        if outputs[-1].shape[1] == 1:
+            outputs.append(self.normalise(outputs[-1]))
+        else:
+            outputs.append(self.softmax(outputs[-1]))
 
         if not precision:
             return outputs
