@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import TypeVar, Generic, List, Set
 import numpy as np
-from RunningStats import RunningStats
+from src.RunningStats import RunningStats
 
 T = TypeVar('T')
 

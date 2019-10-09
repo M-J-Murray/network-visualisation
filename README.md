@@ -25,13 +25,13 @@ To run the application you need:
 
 **Circle Dataset Sigmoid Network Example**
 ```python
-vis = NetworkVisualisation(units=5, data_points=1000, min_range=-1, max_range=1, quality=100, saves_path="resources/Saves", dataset=Dataset.CIRCLE)
+vis = NetworkVisualisation(units=5, data_points=1000, min_range=-1, max_range=1, quality=100, saves_path="resources/saves", dataset=Dataset.CIRCLE)
 vis.show()
 ```
 
 **Spiral Dataset Softmax Network Example**
 ```python
-vis = NetworkVisualisation(units=24, data_points=1000, min_range=-1, max_range=1, quality=100, saves_path="resources/Saves", dataset=Dataset.SPIRAL)
+vis = NetworkVisualisation(units=24, data_points=1000, min_range=-1, max_range=1, quality=100, saves_path="resources/saves", dataset=Dataset.SPIRAL)
 vis.show()
 ```
 

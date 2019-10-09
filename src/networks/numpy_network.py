@@ -1,6 +1,6 @@
 from typing import Generic
 
-from networks.network import Network, List, T
+from src.networks.network import Network, List, T
 import numpy as np
 import os
 

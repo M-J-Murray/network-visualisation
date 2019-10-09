@@ -1,5 +1,5 @@
 import numpy as np
-from PlotUtils import subplot_3d
+from src.PlotUtils import subplot_3d
 
 
 class Plot3D(object):

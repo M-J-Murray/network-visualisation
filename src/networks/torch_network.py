@@ -3,7 +3,7 @@ from typing import Generic, List
 
 import numpy as np
 
-from networks.network import Network, T
+from src.networks.network import Network, T
 
 import os
 import torch
