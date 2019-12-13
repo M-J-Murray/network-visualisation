@@ -3,7 +3,7 @@ from typing import Generic, List
 
 import numpy as np
 
-from src.networks.network import Network, T
+from networks.network import Network, T
 
 import os
 import torch
@@ -17,6 +17,13 @@ class TorchNetwork(Network[Tensor], ABC):
         if not self.is_trained:
             self.optim = torch.optim.Adam(self.layers + self.biases, lr=lr)
             self.criterion = torch.nn.CrossEntropyLoss()
+
+    def enable_training(self, lr, reg):
+        self.is_trained = False
+        self.lr = lr
+        self.reg = reg
+        self.optim = torch.optim.Adam(self.layers + self.biases, lr=lr)
+        self.criterion = torch.nn.CrossEntropyLoss()
 
     def init_layer(self, prev_width, width) -> T:
         return torch.randn(prev_width, width, dtype=torch.float64, requires_grad=True)
@@ -58,7 +65,7 @@ class TorchNetwork(Network[Tensor], ABC):
 
     @staticmethod
     def to_np(inputs: Tensor) -> np.array:
-        return inputs.detach().numpy()
+        return np.copy(inputs.detach().numpy())
 
     @staticmethod
     def from_np(inputs: np.array) -> Tensor:

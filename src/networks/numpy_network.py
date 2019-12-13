@@ -1,6 +1,6 @@
 from typing import Generic
 
-from src.networks.network import Network, List, T
+from networks.network import Network, List, T
 import numpy as np
 import os
 
@@ -36,7 +36,10 @@ class NumpyNetwork(Network[np.ndarray]):
         return np.matmul(X, W) + b
 
     def perceptronise(self, inputs: np.ndarray, thresholds: np.ndarray) -> np.ndarray:
-        return (inputs > thresholds).astype("float32")
+        # return (inputs > thresholds).astype("float32")
+        zeros = np.zeros_like(inputs)
+        zeros[np.arange(inputs.shape[0]), inputs.argmax(axis=1)] = 1
+        return zeros
 
     def reshape(self, inputs: T, new_shape: List[int]) -> T:
         return np.reshape(inputs, newshape=new_shape)
@@ -68,7 +71,7 @@ class NumpyNetwork(Network[np.ndarray]):
 
     @staticmethod
     def to_np(inputs: np.ndarray) -> np.ndarray:
-        return inputs
+        return np.copy(inputs)
 
     @staticmethod
     def from_np(inputs: np.ndarray) -> np.ndarray:

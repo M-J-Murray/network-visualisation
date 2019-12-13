@@ -9,6 +9,23 @@ class Dataset(Enum):
     COMPLEX = "complex_circle"
 
 
+def perfume_dataset(file_path):
+    X = np.zeros((560, 2))
+    y = np.zeros((560), dtype='uint8')
+    per_class = 28
+    sel = np.arange(per_class*2)
+    with open(file_path, "r") as file:
+        current_label = 0
+        for line in file:
+            c_i = current_label * per_class
+            csv_split = np.array(line.split(","))
+            X[c_i:(c_i+per_class), 0] = np.array(csv_split[sel[sel % 2 == 0] + 1], dtype="int")
+            X[c_i:(c_i+per_class), 1] = np.array(csv_split[sel[sel % 2 == 1] + 1], dtype="int")
+            y[c_i:(c_i+per_class)] = current_label
+            current_label += 1
+    return X, y
+
+
 def spiral_dataset(points, classes):
     N = points  # number of points per class
     D = 2  # dimensionality

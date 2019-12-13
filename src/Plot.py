@@ -1,5 +1,5 @@
 import numpy as np
-from src.PlotUtils import subplot
+from PlotUtils import subplot
 
 
 class Plot(object):

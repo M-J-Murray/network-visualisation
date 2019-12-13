@@ -1,5 +1,5 @@
 import numpy as np
-from src.PlotUtils import subplot_3d
+from PlotUtils import subplot_3d
 
 
 class Plot3D(object):
@@ -9,20 +9,21 @@ class Plot3D(object):
         self.plots, self.axes = subplot_3d(fig, plot, loc, shape, precision, data)
 
     def update_plane(self, all_data, plane, index):
-        if self.plots[index]:
-            for cont in self.plots[index].collections:
-                cont.remove()
+        self.remove_plot(index)
         vmax = np.max(all_data)
         vmin = np.min(all_data)
         self.plots[index] = self.axes.contourf(range(self.precision), range(self.precision), plane, self.precision, vmin=vmin, vmax=vmax, cmap='plasma')
 
-    def update_all(self, all_data):
+    def update_all(self, all_data, current, update_all):
         self.remove_all_plots()
         vmax = np.max(all_data)
         vmin = np.min(all_data)
         self.plots = [None]*all_data.shape[2]
-        for i in range(all_data.shape[2]):
-            self.plots[i] = self.axes.contourf(range(self.precision), range(self.precision), all_data[:, :, i], self.precision, vmin=vmin, vmax=vmax, cmap='plasma')
+        if update_all:
+            for i in range(all_data.shape[2]):
+                self.plots[i] = self.axes.contourf(range(self.precision), range(self.precision), all_data[:, :, i], self.precision, vmin=vmin, vmax=vmax, cmap='plasma')
+        else:
+            self.plots[current] = self.axes.contourf(range(self.precision), range(self.precision), all_data[:, :, current], self.precision, vmin=vmin, vmax=vmax, cmap='plasma')
 
     def remove_all_plots(self):
         for i in range(len(self.plots)):

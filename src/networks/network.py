@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import TypeVar, Generic, List, Set
 import numpy as np
-from src.RunningStats import RunningStats
+from RunningStats import RunningStats
 
 T = TypeVar('T')
 
@@ -46,13 +46,20 @@ class Network(Generic[T]):
             self.layers = layers
             self.biases = biases
 
+            if lr is not None and reg is not None:
+                self.lr = lr
+                self.reg = reg
+                self.is_trained = False
+            else:
+                self.is_trained = True
+
             self.architecture = [layers[0].shape[0]]
             self.architecture += [layer.shape[1] for layer in layers]
             self.n_inputs = self.architecture[0]
             self.n_classes = self.architecture[-1]
             self.n_layers = len(self.architecture) - 1
 
-            self.is_trained = True
+
 
     @abstractmethod
     def init_layer(self, prev_width, width) -> T:
@@ -181,3 +188,5 @@ class Network(Generic[T]):
 
             if log:
                 print(f"Episode: {episode}, Test Accuracy: {test_accuracy:6.2f}, Running Avg: {stats.get_average():6.3f}")
+
+        return stats.get_average()
